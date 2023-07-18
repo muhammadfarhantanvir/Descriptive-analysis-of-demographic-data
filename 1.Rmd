@@ -1,0 +1,312 @@
+---
+title: "Descriptive analysis of demographic data"
+author: "Muhammad Farhan Tanvir"
+date: "2023-05-11"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+rm(list = ls())
+```
+
+
+
+```{r}
+# Import the libraries
+library(ggplot2)
+library(ggcorrplot)
+library(ggpubr)
+library(gridExtra)
+```
+
+
+
+
+
+```{r}
+
+# Read the data set
+Census_2022_2002 <- read.csv("census2002_2022.csv")
+
+missing_values <- sum(is.na(Census_2022_2002))
+
+print(paste("Total missing values:", missing_values))
+
+cbind(lapply(lapply(Census_2022_2002, is.na),sum))
+
+# remove rows with missing values and remove variable x 
+df_census <- Census_2022_2002[complete.cases(Census_2022_2002), -1]
+
+# Filter the data for the year 2002 & 2022 
+df_census_2002 <- df_census[df_census$Year == 2002, ]
+
+df_census_2022 <- df_census[df_census$Year == 2022, ] 
+
+df_census_2022 <- head(df_census_2022, nrow(df_census_2022)-6)
+ 
+
+
+```
+
+```{r}
+
+
+#  Task- 1 Frequency distribution of the variables 
+
+
+
+plot1<-ggplot(df_census_2022, aes(x =Life.Expectancy.at.Birth..Both.Sexes)) +geom_histogram(aes(y=..density..), color="Black", fill="purple") +
+  scale_x_continuous(name = "Life expectancy of both sexes") +scale_y_continuous(name = "Density")
+
+plot2<-ggplot(df_census_2022, aes(x = Life.Expectancy.at.Birth..Males)) +geom_histogram(aes(y=..density..), color="Black", fill="purple")+
+  scale_x_continuous(name = "Life expectancy of males") +scale_y_continuous(name = "Density")
+
+plot3<-ggplot(df_census_2022, aes(x = Life.Expectancy.at.Birth..Females)) +geom_histogram(aes(y=..density..), color="Black", fill="purple")+
+  scale_x_continuous(name = "Life expectancy of females") +scale_y_continuous(name = "Density")
+
+diff1 <- df_census_2022$Life.Expectancy.at.Birth..Females - df_census_2022$Life.Expectancy.at.Birth..Males
+
+plot4<-ggplot(df_census_2022, aes(x = diff1)) +
+  geom_histogram(aes(y=..density..), color="Black", fill="purple")+
+  scale_x_continuous(name = "Difference of females and males life expectancy") +
+  scale_y_continuous(name = "Density")
+
+plot5<-ggplot(df_census_2022, aes(x =Under.Age.5.Mortality..Both.Sexes)) +
+  geom_histogram(aes(y=..density..), color="Black", fill="purple") +
+  scale_x_continuous(name = "Under age 5 mortality of both sexes") +
+  scale_y_continuous(name = "Density")
+
+plot6<-ggplot(df_census_2022, aes(x =Under.Age.5.Mortality..Males)) +
+  geom_histogram(aes(y=..density..), color="Black", fill="purple") +
+  scale_x_continuous(name = "Under age 5 mortality of males") +
+  scale_y_continuous(name = "Density")
+
+plot7<-ggplot(df_census_2022, aes(x =Under.Age.5.Mortality..Females)) +
+  geom_histogram(aes(y=..density..), color="Black", fill="purple") +
+  scale_x_continuous(name = "Under age 5 mortality of females") +
+  scale_y_continuous(name = "Density")
+
+
+diff2 <- df_census_2022$Under.Age.5.Mortality..Males - df_census_2022$Under.Age.5.Mortality..Females
+
+plot8<-ggplot(df_census_2022, aes(x = diff2)) +
+  geom_histogram(aes(y=..density..), color="Black", fill="purple")+
+  scale_x_continuous(name = "Difference of males and females mortality") +
+  scale_y_continuous(name = "Density")
+
+
+
+task_1_hist <- grid.arrange(plot1,plot2,plot3,plot4,plot5,plot6,plot7,plot8, nrow=4,ncol=2)
+
+
+```
+
+```{r}
+#  Task- 1 Boxplot of the variables Region
+
+mortality_both <- ggplot(df_census_2022, aes(x = Region, y = Under.Age.5.Mortality..Both.Sexes, fill=Region)) +geom_boxplot() + labs(x = "Region", y = "Under age 5 mortality of both sexes")
+
+mortality_males <- ggplot(df_census_2022, aes(x = Region, y = Under.Age.5.Mortality..Males, fill=Region)) +geom_boxplot() + labs(x = "Region", y = "Under age 5 mortality of males")
+
+mortality_females <- ggplot(df_census_2022, aes(x = Region, y = Under.Age.5.Mortality..Females, fill=Region)) +geom_boxplot() + labs(x = "Region", y = "Under age 5 mortality of females")
+
+Life_Exp_both <- ggplot(df_census_2022, aes(x = Region, y = Life.Expectancy.at.Birth..Both.Sexes, fill=Region)) +geom_boxplot() + labs(x = "Region", y = "Life expectancy of both sexes")
+
+Life_Exp_male <- ggplot(df_census_2022, aes(x = Region, y = Life.Expectancy.at.Birth..Males, fill=Region)) +geom_boxplot() + labs(x = "Region", y = "Life expectancy of males")
+
+Life_Exp_female <- ggplot(df_census_2022, aes(x = Region, y = Life.Expectancy.at.Birth..Females, fill=Region)) +geom_boxplot() + labs(x = "Region", y = "Life expectancy of females")
+
+
+task_1_region <- grid.arrange(mortality_both,mortality_males,mortality_females,Life_Exp_both,Life_Exp_male,Life_Exp_female, nrow=3,ncol=2)
+
+
+```
+
+```{r}
+# Task 2 Homogeneity and Heterogeneity within across the sub regions 
+
+
+# Data set filter for Region Americas
+Americas_data <- subset(df_census_2022, Region == "Americas")
+
+
+mortality_1 <- ggplot(Americas_data, aes(x = Subregion, y = Under.Age.5.Mortality..Both.Sexes,fill=Region)) +geom_boxplot(alpha=0.6, size=0.7) +
+  labs(x = "Subregion", y = "Under age 5 mortality of both sexes")
+
+Life_Exp_1 <- ggplot(Americas_data, aes(x = Subregion, y = Life.Expectancy.at.Birth..Both.Sexes,fill=Region)) +geom_boxplot(alpha=0.6, size=0.7) +
+  labs(x = "Subregion", y = "Life expectancy of both sexes")
+
+
+
+mortality_1
+Life_Exp_1
+
+
+```
+
+
+
+
+
+
+```{r}
+# Task 3 Bivariate Correlation heatmap
+
+
+heatmap <- ggcorrplot(round(cor(df_census_2022[,5:10]), digit = 2), hc.order = TRUE,lab = TRUE, outline.col = "black",ggtheme = ggplot2::theme_gray,colors = c("#87CEEB", "white", "#2471A3"))
+
+heatmap
+
+```
+
+
+```{r}
+# Task 3 Bivariate Correlation scatterplot
+
+plot9 <- ggscatter(df_census_2022, x = "Life.Expectancy.at.Birth..Both.Sexes", y = "Under.Age.5.Mortality..Both.Sexes",
+                 cor.method = "pearson",color = "#A9A9A9",
+                 xlab = "Life expectancy of both sexes", ylab = "Mortality of both sexes")
+
+plot10 <- ggscatter(df_census_2022, x = "Life.Expectancy.at.Birth..Both.Sexes", y = "Life.Expectancy.at.Birth..Males", 
+           cor.method = "pearson",color = "#A9A9A9",
+          xlab = "Life expectancy of both sexes", ylab = "Life expectancy males")
+
+plot11 <- ggscatter(df_census_2022, x = "Life.Expectancy.at.Birth..Both.Sexes", y = "Life.Expectancy.at.Birth..Females", 
+           cor.method = "pearson",color = "#A9A9A9",
+          xlab = "Life expectancy of both sexes", ylab = "Life expectancy females")
+
+plot12 <- ggscatter(df_census_2022, x = "Life.Expectancy.at.Birth..Males", y = "Life.Expectancy.at.Birth..Females", 
+           cor.method = "pearson",color = "#A9A9A9",
+          xlab = "Life expectancy males", ylab = "Life expectancy females")
+
+plot13 <- ggscatter(df_census_2022, x = "Under.Age.5.Mortality..Both.Sexes", y = "Under.Age.5.Mortality..Males", 
+           cor.method = "pearson",color = "#A9A9A9",
+          xlab = "Mortality of both sexes", ylab = "Mortality of males")
+
+plot14 <- ggscatter(df_census_2022, x = "Under.Age.5.Mortality..Both.Sexes", y = "Under.Age.5.Mortality..Females", 
+           cor.method = "pearson",color = "#A9A9A9",
+          xlab = "Mortality of both sexes", ylab = "Mortality of females")
+
+plot15 <- ggscatter(df_census_2022, x = "Under.Age.5.Mortality..Males", y = "Under.Age.5.Mortality..Females", 
+           cor.method = "pearson",color = "#A9A9A9",
+          xlab = "Mortality of males", ylab = "Mortality of females")
+
+scatterplot <- grid.arrange(plot9, plot10,plot11,plot12,plot13,plot14,plot15, nrow=4,ncol=2)
+
+scatterplot
+```
+
+
+
+
+
+
+
+
+
+```{r}
+
+# Task 4 Comparing variations in the variables between the years of 2002 and 2022
+mortality_2 <- ggplot(df_census_2022, aes(x = df_census_2022$Under.Age.5.Mortality..Both.Sexes,y = df_census_2002$Under.Age.5.Mortality..Both.Sexes)) +geom_jitter(aes(color = Region), size = 2, alpha = 0.7) +geom_abline() +xlab("Mortality of both sexes 2022") +ylab("Mortality of both sexes 2002") 
+
+Life_Exp_2 <- ggplot(df_census_2022, aes(x = df_census_2022$Life.Expectancy.at.Birth..Both.Sexes,y = df_census_2002$Life.Expectancy.at.Birth..Both.Sexes)) +geom_jitter(aes(color = Region), size = 2, alpha = 0.7) +geom_abline() +xlab("Life expectancy both sexes in 2022") +ylab("Life expectancy both sexes in 2002") 
+                    
+task_4 <- grid.arrange(mortality_2, Life_Exp_2)
+
+
+
+```
+
+
+
+
+
+
+
+
+
+```{r}
+
+
+# To find the Mean, Median and Variance for the quantitative variables in 2022
+
+
+# Life expectancy both sexes
+
+print(paste("Life expectancy both sexes mean:", mean(df_census_2022$Life.Expectancy.at.Birth..Both.Sexes)))
+print(paste("Life expectancy both sexes median:", median(df_census_2022$Life.Expectancy.at.Birth..Both.Sexes)))
+print(paste("Life expectancy both sexes variance:", var(df_census_2022$Life.Expectancy.at.Birth..Both.Sexes)))
+
+
+# Life expectancy males
+
+print(paste("Life expectancy males mean:", mean(df_census_2022$Life.Expectancy.at.Birth..Males)))
+print(paste("Life expectancy males median:", median(df_census_2022$Life.Expectancy.at.Birth..Males)))
+print(paste("Life expectancy males variance:", var(df_census_2022$Life.Expectancy.at.Birth..Males)))
+
+# Life expectancy females
+
+print(paste("Life expectancy females mean:", mean(df_census_2022$Life.Expectancy.at.Birth..Females)))
+print(paste("Life expectancy females median:", median(df_census_2022$Life.Expectancy.at.Birth..Females)))
+print(paste("Life expectancy females variance:", var(df_census_2022$Life.Expectancy.at.Birth..Females)))
+
+# Under age 5 mortality of both sexes
+
+print(paste("Under age 5 mortality of both sexes mean:", mean(df_census_2022$Under.Age.5.Mortality..Both.Sexes)))
+print(paste("Under age 5 mortality of both sexes median:", median(df_census_2022$Under.Age.5.Mortality..Both.Sexes)))
+print(paste("Under age 5 mortality of both sexes variance:", var(df_census_2022$Under.Age.5.Mortality..Both.Sexes)))
+
+# Under age 5 mortality males
+
+print(paste("Under age 5 mortality of males mean:", mean(df_census_2022$Under.Age.5.Mortality..Males)))
+print(paste("Under age 5 mortality of males median:", median(df_census_2022$Under.Age.5.Mortality..Males)))
+print(paste("Under age 5 mortality of males variance:", var(df_census_2022$Under.Age.5.Mortality..Males)))
+
+# Under age 5 mortality females
+
+
+
+
+print(paste("Under age 5 mortality of females mean:", mean(df_census_2022$Under.Age.5.Mortality..Females)))
+print(paste("Under age 5 mortality of females median:", median(df_census_2022$Under.Age.5.Mortality..Females)))
+print(paste("Under age 5 mortality of females variance:", var(df_census_2022$Under.Age.5.Mortality..Females)))
+
+# Differences of life expectancy
+
+print(paste("Differences of life expectancy mean:", mean(diff1)))
+print(paste("Differences of life expectancy median:", median(diff1)))
+print(paste("Differences of life expectancy variance:", var(diff1)))
+
+# Differences of mortality
+
+print(paste("Differences of mortality mean:", mean(diff2)))
+print(paste("Differences of mortality median:", median(diff2)))
+print(paste("Differences of mortality variance:", var(diff2)))
+
+```
+
+```{r}
+
+
+#Finding mean, median, variance and IQR of subregion
+
+# Under age 5 mortality of both sexes
+
+common<-subset(df_census_2022,df_census_2022$Subregion == "South America")
+
+print(paste("Under age 5 mortality of both sexes mean:", mean(common$Under.Age.5.Mortality..Both.Sexes)))
+print(paste("Under age 5 mortality of both sexes median:", median(common$Under.Age.5.Mortality..Both.Sexes)))
+print(paste("Under age 5 mortality of both sexes variance:", var(common$Under.Age.5.Mortality..Both.Sexes)))
+print(paste("Under age 5 mortality of both sexes IQR:", IQR(common$Under.Age.5.Mortality..Both.Sexes)))
+
+
+# Life expectancy both sexes
+
+print(paste("Life expectancy both sexes mean:", mean(common$Life.Expectancy.at.Birth..Both.Sexes)))
+print(paste("Life expectancy both sexes median:", median(common$Life.Expectancy.at.Birth..Both.Sexes)))
+print(paste("Life expectancy both sexes variance:", var(common$Life.Expectancy.at.Birth..Both.Sexes)))
+print(paste("Life expectancy both sexes IQR:", IQR(common$Life.Expectancy.at.Birth..Both.Sexes)))
+
+
+```
